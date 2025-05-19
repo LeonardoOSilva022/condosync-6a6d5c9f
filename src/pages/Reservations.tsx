@@ -1,13 +1,47 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "lucide-react";
+import { Calendar, Plus } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 const Reservations: React.FC = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // Areas disponíveis para reserva
+  const availableAreas = [
+    { id: "1", name: "Salão de Festas" },
+    { id: "2", name: "Churrasqueira" },
+    { id: "3", name: "Espaço Gourmet" },
+    { id: "4", name: "Piscina" },
+  ];
+  
+  const handleCreateReservation = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    // Simulando criação de reserva
+    toast({
+      title: "Reserva criada",
+      description: "Sua solicitação foi enviada e aguarda aprovação.",
+    });
+    setIsDialogOpen(false);
+  };
   
   return (
     <div>
@@ -18,6 +52,90 @@ const Reservations: React.FC = () => {
             Gerencie as reservas dos espaços comuns
           </p>
         </div>
+        {user?.role === "resident" && (
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Reserva
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <form onSubmit={handleCreateReservation}>
+                <DialogHeader>
+                  <DialogTitle>Nova Reserva</DialogTitle>
+                  <DialogDescription>
+                    Preencha os dados para solicitar a reserva de um espaço comum.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="area" className="text-right">
+                      Espaço
+                    </Label>
+                    <Select required>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Selecione o espaço" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableAreas.map((area) => (
+                          <SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="date" className="text-right">
+                      Data
+                    </Label>
+                    <Input
+                      id="date"
+                      type="date"
+                      className="col-span-3"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="startTime" className="text-right">
+                      Hora Início
+                    </Label>
+                    <Input
+                      id="startTime"
+                      type="time"
+                      className="col-span-3"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="endTime" className="text-right">
+                      Hora Fim
+                    </Label>
+                    <Input
+                      id="endTime"
+                      type="time"
+                      className="col-span-3"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="reason" className="text-right">
+                      Motivo
+                    </Label>
+                    <Textarea
+                      id="reason"
+                      placeholder="Descreva brevemente o motivo da reserva"
+                      className="col-span-3"
+                      required
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit">Solicitar Reserva</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <Tabs defaultValue="upcoming">
