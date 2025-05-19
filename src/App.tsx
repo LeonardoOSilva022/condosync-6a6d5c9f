@@ -9,6 +9,14 @@ import { AuthProvider } from "./context/AuthContext";
 import MainLayout from "./components/MainLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Units from "./pages/Units";
+import Residents from "./pages/Residents";
+import Fees from "./pages/Fees";
+import Announcements from "./pages/Announcements";
+import Reservations from "./pages/Reservations";
+import Messages from "./pages/Messages";
+import Complaints from "./pages/Complaints";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,15 +32,14 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/" element={<MainLayout />}>
               <Route index element={<Dashboard />} />
-              {/* These routes would be implemented in a full version */}
-              <Route path="units" element={<Dashboard />} />
-              <Route path="residents" element={<Dashboard />} />
-              <Route path="fees" element={<Dashboard />} />
-              <Route path="announcements" element={<Dashboard />} />
-              <Route path="reservations" element={<Dashboard />} />
-              <Route path="messages" element={<Dashboard />} />
-              <Route path="complaints" element={<Dashboard />} />
-              <Route path="settings" element={<Dashboard />} />
+              <Route path="units" element={<Units />} />
+              <Route path="residents" element={<Residents />} />
+              <Route path="fees" element={<Fees />} />
+              <Route path="announcements" element={<Announcements />} />
+              <Route path="reservations" element={<Reservations />} />
+              <Route path="messages" element={<Messages />} />
+              <Route path="complaints" element={<Complaints />} />
+              <Route path="settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
