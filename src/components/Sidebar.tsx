@@ -43,7 +43,8 @@ const Sidebar: React.FC = () => {
     { name: "Configurações", path: "/settings", icon: <Settings size={20} />, access: ["manager", "resident"] },
   ];
 
-  const filteredNavigation = navigationItems.filter((item) =>
+  // Strictly filter based on user role
+  const filteredNavigation = navigationItems.filter((item) => 
     item.access.includes(user?.role || "")
   );
 
@@ -88,7 +89,7 @@ const Sidebar: React.FC = () => {
             <div>
               <p className="font-medium text-sm">{user?.name}</p>
               <p className="text-xs text-sidebar-foreground/80">
-                {user?.role === "manager" ? "Síndico" : `Unidade ${user?.unitNumber}`}
+                {isManager ? "Síndico" : `Unidade ${user?.unitNumber}`}
               </p>
             </div>
           </div>
