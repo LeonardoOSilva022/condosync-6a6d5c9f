@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Bell, Calendar, AlertTriangle, MessageSquare } from "lucide-react";
+import { DollarSign, Bell, Calendar, AlertTriangle, MessageSquare, Home } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
@@ -222,8 +222,8 @@ const ResidentDashboard: React.FC = () => {
               </Button>
               <Button variant="outline" className="h-auto py-4 flex flex-col items-center justify-center" asChild>
                 <Link to="/settings">
-                  <AlertTriangle className="h-5 w-5 mb-1" />
-                  <span>Configurações</span>
+                  <Home className="h-5 w-5 mb-1" />
+                  <span>Minha Unidade</span>
                 </Link>
               </Button>
             </div>

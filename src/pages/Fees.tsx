@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Eye } from "lucide-react";
+import { DollarSign, Eye, FileText, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,7 +11,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import FeeReceipt from "@/components/fees/FeeReceipt";
 
 // Dados fixos para demonstração
 const mockFeeDetail = {
@@ -28,23 +32,58 @@ const mockFeeDetail = {
     { name: "Segurança", value: 80.00 },
     { name: "Manutenção geral", value: 120.00 },
     { name: "Reserva de contingência", value: 50.00 }
-  ]
+  ],
+  attachments: []
 };
 
 const Fees: React.FC = () => {
   const { user } = useAuth();
   const [openDetail, setOpenDetail] = useState(false);
   const [selectedFee, setSelectedFee] = useState<any>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
   const handleViewFee = (feeId: string) => {
     // Em uma aplicação real, buscaríamos os detalhes da taxa pelo ID
-    setSelectedFee(mockFeeDetail);
+    setSelectedFee({...mockFeeDetail, attachments: []});
     setOpenDetail(true);
   };
 
   const handlePayFee = () => {
     toast.success("Pagamento realizado com sucesso!");
     setOpenDetail(false);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setIsUploading(true);
+      
+      // Simular upload
+      setTimeout(() => {
+        if (selectedFee) {
+          const newFiles = Array.from(files);
+          setUploadedFiles(prev => [...prev, ...newFiles]);
+          
+          // Update the selected fee with new attachments
+          setSelectedFee({
+            ...selectedFee,
+            attachments: [
+              ...(selectedFee.attachments || []),
+              ...Array.from(files).map(file => ({
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                uploadDate: new Date().toLocaleDateString()
+              }))
+            ]
+          });
+          
+          toast.success("Documento anexado com sucesso!");
+          setIsUploading(false);
+        }
+      }, 1000);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -231,12 +270,59 @@ const Fees: React.FC = () => {
                 </div>
               </div>
 
+              {/* Anexar documentos */}
+              {selectedFee.status === "paid" && (
+                <div>
+                  <h4 className="font-semibold text-sm mb-2">Documentos Anexados</h4>
+                  
+                  {selectedFee.attachments && selectedFee.attachments.length > 0 ? (
+                    <div className="border rounded-md p-3 space-y-2">
+                      {selectedFee.attachments.map((file: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between border-b pb-2">
+                          <div className="flex items-center">
+                            <FileText className="h-4 w-4 mr-2" />
+                            <span className="text-sm">{file.name}</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">{file.uploadDate}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Nenhum documento anexado.</p>
+                  )}
+                  
+                  <div className="mt-3">
+                    <Label htmlFor="document" className="text-sm">Anexar Documento</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input 
+                        id="document" 
+                        type="file" 
+                        className="text-sm" 
+                        onChange={handleFileUpload}
+                        disabled={isUploading}
+                      />
+                      <Button size="sm" disabled={isUploading} onClick={() => document.getElementById('document')?.click()}>
+                        <Paperclip className="h-4 w-4 mr-1" />
+                        Anexar
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex justify-end space-x-2 pt-4">
                 {selectedFee.status === "pending" && (
                   <Button onClick={handlePayFee}>Pagar Taxa</Button>
                 )}
-                {selectedFee.status === "paid" && selectedFee.receiptUrl && (
-                  <Button variant="outline">Download do Recibo</Button>
+                {selectedFee.status === "paid" && (
+                  <PDFDownloadLink
+                    document={<FeeReceipt fee={selectedFee} />}
+                    fileName={`recibo-${selectedFee.id}.pdf`}
+                    className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Gerar Recibo PDF
+                  </PDFDownloadLink>
                 )}
                 <Button variant="outline" onClick={() => setOpenDetail(false)}>
                   Fechar
