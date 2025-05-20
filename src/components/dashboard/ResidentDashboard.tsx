@@ -13,13 +13,12 @@ const ResidentDashboard: React.FC = () => {
   const stats = {
     pendingFees: 2,
     totalPendingAmount: 560,
-    activeAnnouncements: 4,
     upcomingReservations: 1,
   };
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Taxas Pendentes</CardTitle>
@@ -29,18 +28,6 @@ const ResidentDashboard: React.FC = () => {
             <div className="text-2xl font-bold">{stats.pendingFees}</div>
             <p className="text-xs text-muted-foreground">
               R$ {stats.totalPendingAmount.toFixed(2)} a pagar
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Avisos</CardTitle>
-            <Bell className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.activeAnnouncements}</div>
-            <p className="text-xs text-muted-foreground">
-              Avisos ativos
             </p>
           </CardContent>
         </Card>
