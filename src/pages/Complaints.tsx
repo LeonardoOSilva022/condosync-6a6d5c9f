@@ -104,7 +104,7 @@ const Complaints: React.FC = () => {
       if (c.id === complaint.id) {
         return {
           ...c,
-          status: "resolved",
+          status: "resolved" as "pending" | "in-progress" | "resolved",
           response: responseText || "Reclamação resolvida pelo síndico.",
           responseDate: new Date().toLocaleDateString()
         };
