@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Bell, Calendar, AlertTriangle, MessageSquare, Home, Building, Users, Plus } from "lucide-react";
@@ -306,8 +305,8 @@ const ResidentDashboard: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Modal para áreas comuns */}
-      <Dialog open={isAreasModalOpen} onOpenChange={setIsAreasModalOpen} className="sm:max-w-[800px]">
+      {/* Modal para áreas comuns - Fix: moved className from Dialog to DialogContent */}
+      <Dialog open={isAreasModalOpen} onOpenChange={setIsAreasModalOpen}>
         <DialogContent className="sm:max-w-[800px]">
           <DialogHeader>
             <DialogTitle>Áreas Comuns do Condomínio</DialogTitle>
