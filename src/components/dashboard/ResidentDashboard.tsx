@@ -12,6 +12,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 
 // Esquema de validação para o formulário de reclamação
 const complaintSchema = z.object({
@@ -20,9 +22,17 @@ const complaintSchema = z.object({
 });
 
 const ResidentDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isManager } = useAuth();
   const [isNewComplaintOpen, setIsNewComplaintOpen] = useState(false);
   const [isAreasModalOpen, setIsAreasModalOpen] = useState(false);
+  const [selectedArea, setSelectedArea] = useState<any>(null);
+  const [commonAreas, setCommonAreas] = useState([
+    { id: 1, name: "Salão de Festas", available: true, image: "https://placehold.co/300x200/e2e8f0/1e293b?text=Salão+de+Festas", description: "Capacidade para até 50 pessoas. Equipado com cozinha completa." },
+    { id: 2, name: "Piscina", available: true, image: "https://placehold.co/300x200/e2e8f0/1e293b?text=Piscina", description: "Adulto e infantil, com área de descanso." },
+    { id: 3, name: "Academia", available: true, image: "https://placehold.co/300x200/e2e8f0/1e293b?text=Academia", description: "Esteiras, bicicletas, pesos livres e aparelhos." },
+    { id: 4, name: "Espaço Gourmet", available: false, image: "https://placehold.co/300x200/e2e8f0/1e293b?text=Espaço+Gourmet", description: "Churrasqueira, forno de pizza e mesa para 12 pessoas." },
+  ]);
+  const [isAreaDetailOpen, setIsAreaDetailOpen] = useState(false);
   
   // Mock data
   const stats = {
@@ -30,14 +40,6 @@ const ResidentDashboard: React.FC = () => {
     totalPendingAmount: 560,
     upcomingReservations: 1,
   };
-
-  // Mock data for common areas
-  const commonAreas = [
-    { id: 1, name: "Salão de Festas", available: true, image: "https://placehold.co/300x200/e2e8f0/1e293b?text=Salão+de+Festas", description: "Capacidade para até 50 pessoas. Equipado com cozinha completa." },
-    { id: 2, name: "Piscina", available: true, image: "https://placehold.co/300x200/e2e8f0/1e293b?text=Piscina", description: "Adulto e infantil, com área de descanso." },
-    { id: 3, name: "Academia", available: true, image: "https://placehold.co/300x200/e2e8f0/1e293b?text=Academia", description: "Esteiras, bicicletas, pesos livres e aparelhos." },
-    { id: 4, name: "Espaço Gourmet", available: false, image: "https://placehold.co/300x200/e2e8f0/1e293b?text=Espaço+Gourmet", description: "Churrasqueira, forno de pizza e mesa para 12 pessoas." },
-  ];
 
   // Configuração do formulário de reclamação
   const form = useForm<z.infer<typeof complaintSchema>>({
@@ -53,6 +55,30 @@ const ResidentDashboard: React.FC = () => {
     toast.success("Reclamação registrada com sucesso!");
     setIsNewComplaintOpen(false);
     form.reset();
+  };
+
+  const handleAreaClick = (area: any) => {
+    setSelectedArea(area);
+    setIsAreaDetailOpen(true);
+  };
+
+  const toggleAreaStatus = (id: number) => {
+    setCommonAreas(commonAreas.map(area => {
+      if (area.id === id) {
+        return { ...area, available: !area.available };
+      }
+      return area;
+    }));
+    
+    // Update selected area if it's the one being toggled
+    if (selectedArea && selectedArea.id === id) {
+      setSelectedArea({
+        ...selectedArea,
+        available: !selectedArea.available
+      });
+    }
+    
+    toast.success(`Status da área "${selectedArea?.name}" alterado com sucesso!`);
   };
 
   return (
@@ -305,7 +331,7 @@ const ResidentDashboard: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Modal para áreas comuns - Fix: moved className from Dialog to DialogContent */}
+      {/* Modal para listar áreas comuns */}
       <Dialog open={isAreasModalOpen} onOpenChange={setIsAreasModalOpen}>
         <DialogContent className="sm:max-w-[800px]">
           <DialogHeader>
@@ -315,39 +341,62 @@ const ResidentDashboard: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 max-h-[60vh] overflow-y-auto pr-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4 max-h-[60vh] overflow-y-auto pr-2">
             {commonAreas.map((area) => (
-              <div key={area.id} className="border rounded-md overflow-hidden">
-                <img 
-                  src={area.image} 
-                  alt={area.name} 
-                  className="w-full h-40 object-cover"
-                />
-                <div className="p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-semibold">{area.name}</h3>
+              <Card key={area.id} className="overflow-hidden border-0 shadow-md transition-all hover:shadow-lg">
+                <div className="relative h-48">
+                  <img 
+                    src={area.image} 
+                    alt={area.name} 
+                    className="w-full h-full object-cover"
+                  />
+                  <Badge 
+                    className={`absolute top-3 right-3 ${
+                      area.available 
+                        ? "bg-green-100 text-green-800 hover:bg-green-200" 
+                        : "bg-red-100 text-red-800 hover:bg-red-200"
+                    }`}
+                  >
+                    {area.available ? "Disponível" : "Em Manutenção"}
+                  </Badge>
+                </div>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xl">{area.name}</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <p className="text-muted-foreground line-clamp-2">{area.description}</p>
+                  <div className="flex justify-between items-center mt-4">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleAreaClick(area)}
+                    >
+                      Ver detalhes
+                    </Button>
                     {area.available ? (
-                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Disponível</span>
+                      <Button 
+                        size="sm" 
+                        variant="default" 
+                        disabled={!area.available}
+                        asChild
+                      >
+                        <Link to="/reservations">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Reservar
+                        </Link>
+                      </Button>
                     ) : (
-                      <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">Em Manutenção</span>
+                      <Button size="sm" variant="secondary" disabled>
+                        Indisponível
+                      </Button>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground mb-3">{area.description}</p>
-                  <Button size="sm" variant="outline" className="w-full" disabled={!area.available} asChild>
-                    <Link to="/reservations">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      {area.available ? "Fazer Reserva" : "Indisponível"}
-                    </Link>
-                  </Button>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
 
           <div className="flex justify-end space-x-2 pt-4 border-t mt-4">
-            <Button variant="outline" onClick={() => setIsAreasModalOpen(false)}>
-              Fechar
-            </Button>
             <Button asChild>
               <Link to="/reservations">
                 Ir para Reservas
@@ -356,6 +405,91 @@ const ResidentDashboard: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Drawer para detalhes da área */}
+      <Drawer open={isAreaDetailOpen} onOpenChange={setIsAreaDetailOpen}>
+        <DrawerContent>
+          <DrawerHeader className="text-left">
+            <DrawerTitle className="text-2xl font-bold">{selectedArea?.name}</DrawerTitle>
+            <DrawerDescription>
+              Detalhes completos da área comum
+            </DrawerDescription>
+          </DrawerHeader>
+          {selectedArea && (
+            <div className="px-4 py-2">
+              <div className="relative rounded-lg overflow-hidden mb-4">
+                <img 
+                  src={selectedArea.image} 
+                  alt={selectedArea.name} 
+                  className="w-full h-[200px] object-cover"
+                />
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground">Descrição</h3>
+                  <p className="mt-1">{selectedArea.description}</p>
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground">Status</h3>
+                  <div className="flex items-center mt-1">
+                    <Badge 
+                      className={`mr-2 ${
+                        selectedArea.available 
+                          ? "bg-green-100 text-green-800" 
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {selectedArea.available ? "Disponível" : "Em Manutenção"}
+                    </Badge>
+                    
+                    {isManager && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => toggleAreaStatus(selectedArea.id)}
+                      >
+                        {selectedArea.available ? "Marcar como Indisponível" : "Marcar como Disponível"}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground">Horários de Funcionamento</h3>
+                  <p className="mt-1">Segunda a Domingo, 08:00 às 22:00</p>
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground">Regras de Uso</h3>
+                  <ul className="list-disc pl-5 mt-1 space-y-1">
+                    <li>Respeitar o limite de capacidade</li>
+                    <li>Manter o ambiente limpo e organizado</li>
+                    <li>Respeitar o horário de funcionamento</li>
+                    <li>Crianças devem estar acompanhadas de adultos</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+          <DrawerFooter className="pt-2">
+            <div className="flex flex-col sm:flex-row gap-2">
+              {selectedArea?.available && (
+                <Button className="sm:flex-1" asChild>
+                  <Link to="/reservations">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Fazer Reserva
+                  </Link>
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => setIsAreaDetailOpen(false)} className="sm:flex-1">
+                Fechar
+              </Button>
+            </div>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </>
   );
 };
