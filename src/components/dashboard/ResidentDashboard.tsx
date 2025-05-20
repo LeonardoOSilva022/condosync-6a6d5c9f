@@ -1,19 +1,59 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Bell, Calendar, AlertTriangle, MessageSquare, Home } from "lucide-react";
+import { DollarSign, Bell, Calendar, AlertTriangle, MessageSquare, Home, Building, Users, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+
+// Esquema de validação para o formulário de reclamação
+const complaintSchema = z.object({
+  title: z.string().min(5, "O título deve ter pelo menos 5 caracteres"),
+  description: z.string().min(20, "A descrição deve ter pelo menos 20 caracteres"),
+});
 
 const ResidentDashboard: React.FC = () => {
   const { user } = useAuth();
+  const [isNewComplaintOpen, setIsNewComplaintOpen] = useState(false);
+  const [isAreasModalOpen, setIsAreasModalOpen] = useState(false);
   
   // Mock data
   const stats = {
     pendingFees: 2,
     totalPendingAmount: 560,
     upcomingReservations: 1,
+  };
+
+  // Mock data for common areas
+  const commonAreas = [
+    { id: 1, name: "Salão de Festas", available: true, image: "https://placehold.co/300x200/e2e8f0/1e293b?text=Salão+de+Festas", description: "Capacidade para até 50 pessoas. Equipado com cozinha completa." },
+    { id: 2, name: "Piscina", available: true, image: "https://placehold.co/300x200/e2e8f0/1e293b?text=Piscina", description: "Adulto e infantil, com área de descanso." },
+    { id: 3, name: "Academia", available: true, image: "https://placehold.co/300x200/e2e8f0/1e293b?text=Academia", description: "Esteiras, bicicletas, pesos livres e aparelhos." },
+    { id: 4, name: "Espaço Gourmet", available: false, image: "https://placehold.co/300x200/e2e8f0/1e293b?text=Espaço+Gourmet", description: "Churrasqueira, forno de pizza e mesa para 12 pessoas." },
+  ];
+
+  // Configuração do formulário de reclamação
+  const form = useForm<z.infer<typeof complaintSchema>>({
+    resolver: zodResolver(complaintSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+    },
+  });
+
+  const onSubmitComplaint = (values: z.infer<typeof complaintSchema>) => {
+    console.log("Reclamação enviada:", values);
+    toast.success("Reclamação registrada com sucesso!");
+    setIsNewComplaintOpen(false);
+    form.reset();
   };
 
   return (
@@ -115,7 +155,7 @@ const ResidentDashboard: React.FC = () => {
                 </div>
                 <div className="mt-2 flex justify-end">
                   <Button size="sm" variant="outline" asChild>
-                    <Link to="/fees/1">Ver Detalhes</Link>
+                    <Link to="/fees">Ver Detalhes</Link>
                   </Button>
                 </div>
               </div>
@@ -129,7 +169,7 @@ const ResidentDashboard: React.FC = () => {
                 </div>
                 <div className="mt-2 flex justify-end">
                   <Button size="sm" variant="outline" asChild>
-                    <Link to="/fees/2">Ver Detalhes</Link>
+                    <Link to="/fees">Ver Detalhes</Link>
                   </Button>
                 </div>
               </div>
@@ -170,7 +210,7 @@ const ResidentDashboard: React.FC = () => {
                   <Link to="/reservations">Ver Minhas Reservas</Link>
                 </Button>
                 <Button className="ml-2" asChild>
-                  <Link to="/reservations/new">
+                  <Link to="/reservations">
                     <Calendar className="mr-2 h-4 w-4" />
                     Nova Reserva
                   </Link>
@@ -189,11 +229,9 @@ const ResidentDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" className="h-auto py-4 flex flex-col items-center justify-center" asChild>
-                <Link to="/complaints/new">
-                  <AlertTriangle className="h-5 w-5 mb-1" />
-                  <span>Nova Reclamação</span>
-                </Link>
+              <Button variant="outline" className="h-auto py-4 flex flex-col items-center justify-center" onClick={() => setIsNewComplaintOpen(true)}>
+                <AlertTriangle className="h-5 w-5 mb-1" />
+                <span>Nova Reclamação</span>
               </Button>
               <Button variant="outline" className="h-auto py-4 flex flex-col items-center justify-center" asChild>
                 <Link to="/messages">
@@ -201,11 +239,9 @@ const ResidentDashboard: React.FC = () => {
                   <span>Mensagens</span>
                 </Link>
               </Button>
-              <Button variant="outline" className="h-auto py-4 flex flex-col items-center justify-center" asChild>
-                <Link to="/reservations/areas">
-                  <Calendar className="h-5 w-5 mb-1" />
-                  <span>Áreas Comuns</span>
-                </Link>
+              <Button variant="outline" className="h-auto py-4 flex flex-col items-center justify-center" onClick={() => setIsAreasModalOpen(true)}>
+                <Building className="h-5 w-5 mb-1" />
+                <span>Áreas Comuns</span>
               </Button>
               <Button variant="outline" className="h-auto py-4 flex flex-col items-center justify-center" asChild>
                 <Link to="/settings">
@@ -217,6 +253,110 @@ const ResidentDashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal para criar nova reclamação */}
+      <Dialog open={isNewComplaintOpen} onOpenChange={setIsNewComplaintOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Nova Reclamação</DialogTitle>
+            <DialogDescription>
+              Preencha os campos abaixo para registrar uma nova reclamação ou sugestão.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmitComplaint)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Título</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Título da reclamação" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descrição</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Descreva detalhadamente sua reclamação ou sugestão..." 
+                        className="min-h-[120px]"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter>
+                <Button type="submit">Enviar</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para áreas comuns */}
+      <Dialog open={isAreasModalOpen} onOpenChange={setIsAreasModalOpen} className="sm:max-w-[800px]">
+        <DialogContent className="sm:max-w-[800px]">
+          <DialogHeader>
+            <DialogTitle>Áreas Comuns do Condomínio</DialogTitle>
+            <DialogDescription>
+              Conheça as áreas comuns disponíveis para uso e reserva
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 max-h-[60vh] overflow-y-auto pr-2">
+            {commonAreas.map((area) => (
+              <div key={area.id} className="border rounded-md overflow-hidden">
+                <img 
+                  src={area.image} 
+                  alt={area.name} 
+                  className="w-full h-40 object-cover"
+                />
+                <div className="p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold">{area.name}</h3>
+                    {area.available ? (
+                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Disponível</span>
+                    ) : (
+                      <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">Em Manutenção</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">{area.description}</p>
+                  <Button size="sm" variant="outline" className="w-full" disabled={!area.available} asChild>
+                    <Link to="/reservations">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      {area.available ? "Fazer Reserva" : "Indisponível"}
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4 border-t mt-4">
+            <Button variant="outline" onClick={() => setIsAreasModalOpen(false)}>
+              Fechar
+            </Button>
+            <Button asChild>
+              <Link to="/reservations">
+                Ir para Reservas
+              </Link>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

@@ -1,13 +1,53 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building, DollarSign, Calendar, AlertTriangle, Bell } from "lucide-react";
+import { Building, DollarSign, Calendar, AlertTriangle, Bell, Eye } from "lucide-react";
 import ManagerDashboard from "@/components/dashboard/ManagerDashboard";
 import ResidentDashboard from "@/components/dashboard/ResidentDashboard";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard: React.FC = () => {
   const { user, isManager, isResident } = useAuth();
+  const navigate = useNavigate();
+  const [openFeeDetail, setOpenFeeDetail] = useState(false);
+  const [selectedFee, setSelectedFee] = useState<any>(null);
+
+  // Mock fee data
+  const mockFee = {
+    id: "fee-1",
+    description: "Taxa de Condomínio - Maio/2025",
+    amount: 350.00,
+    dueDate: "10/05/2025",
+    status: "pending",
+    details: [
+      { name: "Taxa de limpeza", value: 100.00 },
+      { name: "Segurança", value: 80.00 },
+      { name: "Manutenção geral", value: 120.00 },
+      { name: "Reserva de contingência", value: 50.00 }
+    ]
+  };
+
+  const handleViewFeeDetails = () => {
+    setSelectedFee(mockFee);
+    setOpenFeeDetail(true);
+  };
+
+  const goToFeesPage = () => {
+    navigate("/fees");
+  };
+
+  const getStatusBadge = (status: string) => {
+    if (status === "paid") {
+      return <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Pago</span>;
+    } else if (status === "pending") {
+      return <span className="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-700 ring-1 ring-inset ring-yellow-600/20">Pendente</span>;
+    } else {
+      return <span className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">Atrasado</span>;
+    }
+  };
 
   // Summary cards specific to each role
   const renderRoleSpecificSummary = () => {
@@ -40,7 +80,7 @@ const Dashboard: React.FC = () => {
     } else {
       return (
         <>
-          <Card>
+          <Card className="cursor-pointer" onClick={handleViewFeeDetails}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Minhas Taxas Pendentes</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -48,6 +88,9 @@ const Dashboard: React.FC = () => {
             <CardContent>
               <div className="text-2xl font-bold">2</div>
               <p className="text-xs text-muted-foreground">Valor total: R$ 560,00</p>
+              <div className="mt-2 text-xs flex items-center text-blue-600">
+                <Eye className="h-3 w-3 mr-1" /> Ver detalhes
+              </div>
             </CardContent>
           </Card>
           
@@ -118,6 +161,76 @@ const Dashboard: React.FC = () => {
       </div>
 
       {isManager ? <ManagerDashboard /> : <ResidentDashboard />}
+
+      {/* Modal para detalhes da taxa */}
+      <Dialog open={openFeeDetail} onOpenChange={setOpenFeeDetail}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Detalhes da Taxa</DialogTitle>
+            <DialogDescription>
+              Informações completas sobre a taxa pendente.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedFee && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-semibold text-sm">Descrição</h4>
+                  <p>{selectedFee.description}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm">Valor Total</h4>
+                  <p className="text-lg font-bold">R$ {selectedFee.amount.toFixed(2)}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm">Data de Vencimento</h4>
+                  <p>{selectedFee.dueDate}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm">Status</h4>
+                  <p>{getStatusBadge(selectedFee.status)}</p>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-sm mb-2">Composição da Taxa</h4>
+                <div className="border rounded-md">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted">
+                      <tr>
+                        <th className="p-2 text-left font-medium">Item</th>
+                        <th className="p-2 text-right font-medium">Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedFee.details.map((detail: any, index: number) => (
+                        <tr key={index} className="border-t">
+                          <td className="p-2 text-left">{detail.name}</td>
+                          <td className="p-2 text-right">R$ {detail.value.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                      <tr className="border-t bg-muted">
+                        <td className="p-2 text-left font-bold">Total</td>
+                        <td className="p-2 text-right font-bold">R$ {selectedFee.amount.toFixed(2)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button onClick={goToFeesPage}>
+                  Ver Todas as Taxas
+                </Button>
+                <Button variant="outline" onClick={() => setOpenFeeDetail(false)}>
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
